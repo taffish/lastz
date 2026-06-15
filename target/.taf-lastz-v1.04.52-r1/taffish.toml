@@ -1,0 +1,47 @@
+[package]
+name = "lastz"
+kind = "tool"
+version = "1.04.52"
+release = 1
+license = "Apache-2.0"
+main = "src/main.taf"
+
+[repository]
+url = "https://github.com/taffish/lastz"
+
+[command]
+name = "taf-lastz"
+
+[runtime]
+pipe = true
+command_mode = true
+
+[container]
+image = "ghcr.io/taffish/lastz:1.04.52-r1"
+dockerfile = "docker/Dockerfile"
+build_platforms = "linux/amd64,linux/arm64"
+
+[meta]
+domain = "bio"
+categories = ["genome-alignment", "pairwise-alignment", "comparative-genomics", "whole-genome-alignment"]
+keywords = ["LASTZ", "BLASTZ", "DNA alignment", "pairwise alignment", "LAV", "AXT", "MAF", "SAM", "PAF", "CIGAR", "2bit", "nib"]
+description = "LASTZ 1.04.52 command-line runtime for pairwise DNA sequence alignment, scoring inference, and common genomic alignment output formats."
+
+[upstream]
+name = "LASTZ"
+type = "github"
+repo = "lastz/lastz"
+homepage = "https://github.com/lastz/lastz"
+manual = "https://lastz.github.io/lastz/"
+release_url = "https://github.com/lastz/lastz/releases/tag/1.04.52"
+downloads = "https://github.com/lastz/lastz/archive/refs/tags/1.04.52.tar.gz"
+version = "1.04.52"
+license = "MIT"
+citation = "Harris RS 2007, Improved pairwise alignment of genomic DNA"
+watch = "tags"
+
+[smoke]
+backend = "docker"
+timeout = 180
+exist = ["lastz", "lastz_D", "lastz_32", "lastz_40", "lav_sort.py", "maf_sort.py", "python3", "bash", "sed", "grep", "ldd"]
+test = ["lastz --version 2>&1 | grep -F \"lastz (version 1.04.52 released 20250402)\" >/dev/null", "lastz --help 2>&1 | grep -F \"target[[start..end]]\" >/dev/null && lastz --help 2>&1 | grep -F -- \"--format=<type>\" >/dev/null", "for cmd in lastz lastz_D lastz_32 lastz_40; do ldd \"$(command -v \"$cmd\")\" 2>&1 | grep -F \"not found\" && exit 1 || true; done", "python3 -m py_compile /opt/lastz/share/lastz/tools/lav_sort.py /opt/lastz/share/lastz/tools/maf_sort.py /opt/lastz/share/lastz/tabular_tools/alignment_table.py", "tmp=/tmp/taf-lastz-smoke-$$; rm -rf \"$tmp\"; mkdir -p \"$tmp\"; lastz /opt/lastz/share/testdata/pseudocat.fa /opt/lastz/share/testdata/pseudopig.fa C=2 W=8 T=0 --format=lav > \"$tmp/out.lav\"; test -s \"$tmp/out.lav\"; grep -F \"#:lav\" \"$tmp/out.lav\" >/dev/null; lastz /opt/lastz/share/testdata/pseudocat.fa /opt/lastz/share/testdata/pseudopig.fa C=2 W=8 T=0 --format=axt > \"$tmp/out.axt\"; test -s \"$tmp/out.axt\"; lastz /opt/lastz/share/testdata/pseudocat.fa /opt/lastz/share/testdata/pseudopig.fa C=2 W=8 T=0 --format=maf > \"$tmp/out.maf\"; grep -F \"##maf version=1\" \"$tmp/out.maf\" >/dev/null; lastz_D /opt/lastz/share/testdata/pseudocat.fa /opt/lastz/share/testdata/pseudopig.fa C=2 W=8 T=0 > \"$tmp/out_D.lav\"; test -s \"$tmp/out_D.lav\"; lastz_32 /opt/lastz/share/testdata/pseudocat.fa /opt/lastz/share/testdata/pseudopig.fa C=2 W=8 T=0 --format=sam- > \"$tmp/out.sam\"; test -s \"$tmp/out.sam\"; lastz_40 /opt/lastz/share/testdata/pseudocat.fa /opt/lastz/share/testdata/pseudopig.fa C=2 W=8 T=0 --format=paf > \"$tmp/out.paf\"; test -s \"$tmp/out.paf\"; rm -rf \"$tmp\""]
