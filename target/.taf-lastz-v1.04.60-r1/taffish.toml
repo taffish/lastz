@@ -1,8 +1,8 @@
 [package]
 name = "lastz"
 kind = "tool"
-version = "1.04.52"
-release = 2
+version = "1.04.60"
+release = 1
 license = "Apache-2.0"
 main = "src/main.taf"
 
@@ -17,7 +17,7 @@ pipe = true
 command_mode = true
 
 [container]
-image = "ghcr.io/taffish/lastz:1.04.52-r2"
+image = "ghcr.io/taffish/lastz:1.04.60-r1"
 dockerfile = "docker/Dockerfile"
 build_platforms = "linux/amd64,linux/arm64"
 
@@ -25,7 +25,7 @@ build_platforms = "linux/amd64,linux/arm64"
 domain = "bio"
 categories = ["genome-alignment", "pairwise-alignment", "comparative-genomics", "whole-genome-alignment"]
 keywords = ["LASTZ", "BLASTZ", "DNA alignment", "pairwise alignment", "LAV", "AXT", "MAF", "SAM", "PAF", "CIGAR", "2bit", "nib"]
-description = "LASTZ 1.04.52 command-line runtime for pairwise DNA sequence alignment, scoring inference, and common genomic alignment output formats."
+description = "LASTZ 1.04.60 command-line runtime for pairwise DNA sequence alignment, scoring inference, and common genomic alignment output formats."
 
 [upstream]
 name = "LASTZ"
@@ -33,9 +33,9 @@ type = "github"
 repo = "lastz/lastz"
 homepage = "https://github.com/lastz/lastz"
 manual = "https://lastz.github.io/lastz/"
-release_url = "https://github.com/lastz/lastz/releases/tag/1.04.52"
-downloads = "https://github.com/lastz/lastz/archive/refs/tags/1.04.52.tar.gz"
-version = "1.04.52"
+release_url = "https://github.com/lastz/lastz/releases/tag/1.04.60"
+downloads = "https://github.com/lastz/lastz/archive/refs/tags/1.04.60.tar.gz"
+version = "1.04.60"
 license = "MIT"
 citation = "Harris RS 2007, Improved pairwise alignment of genomic DNA"
 watch = "tags"
@@ -44,4 +44,4 @@ watch = "tags"
 backend = "docker"
 timeout = 180
 exist = ["lastz", "lastz_D", "lastz_32", "lastz_40", "alignment_table.py", "alignment_table_aids.py", "any_to_qdna.py", "axt_compare.py", "build_fasta_hsx.py", "cigar.py", "create_scores_file.sh", "expand_scores_file.py", "fasta_fragments.py", "fasta_softmask_intervals.py", "gfa_compare.py", "hassock_hash.py", "hsx_file.py", "install_py.py", "lav_compare.py", "lav_sort.py", "maf_sort.py", "merge_masking_intervals.py", "pick_from_fasta_hsx.py", "probabilities_to_scores.py", "qcode_to_scores.py", "tabular_to_maf.py", "python3", "bash", "sed", "grep", "ldd", "find", "mktemp", "tail", "taf-lastz-smoke"]
-test = ["taf-lastz-smoke source", "taf-lastz-smoke versions", "taf-lastz-smoke pycompile", "taf-lastz-smoke align", "taf-lastz-smoke helpers"]
+test = ["taf-lastz-smoke source", "taf-lastz-smoke versions", "taf-lastz-smoke pycompile", "taf-lastz-smoke align", "taf-lastz-smoke helpers", "taf-lastz-smoke masking"]

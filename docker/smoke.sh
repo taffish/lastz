@@ -45,6 +45,22 @@ run_cmd() {
     fi
 }
 
+run_information() {
+    stage=$1
+    output_file=$2
+    shift 2
+    set +e
+    "$@" >"$output_file" 2>&1
+    rc=$?
+    set -e
+    # 上游 --version/--help 明确 exit(EXIT_FAILURE)，不是正常功能命令。
+    if [ "$rc" -ne 1 ]; then
+        printf 'stage=%s expected informational exit=1 actual=%s\n' "$stage" "$rc" >&2
+        tail -n 80 "$output_file" >&2
+        exit 1
+    fi
+}
+
 run_stdin() {
     stage=$1
     stdin_file=$2
@@ -66,8 +82,8 @@ tabular=/opt/lastz/share/lastz/tabular_tools
 
 case "${1:-}" in
     source)
-        grep -F 'LASTZ 1.04.52' /opt/lastz/share/doc/lastz/source.txt >/dev/null
-        grep -F 'SHA256: 274bf0d774e3f4da87c23ca0b5cc4269f3dcaecf71a1c6289d426e24fbccf4c8' \
+        grep -Fx 'LASTZ 1.04.60' /opt/lastz/share/doc/lastz/source.txt >/dev/null
+        grep -Fx 'SHA256: e66bb419a6599861b1d48c3b209d3746e8008c3ddde33f0dfeaa76e634bccebf' \
             /opt/lastz/share/doc/lastz/source.txt >/dev/null
         grep -F 'Python 3 compatibility: strict package patch applied.' \
             /opt/lastz/share/doc/lastz/source.txt >/dev/null
@@ -81,12 +97,21 @@ case "${1:-}" in
         fi
         ;;
     versions)
+        new_workdir versions
         for command in lastz lastz_D lastz_32 lastz_40; do
-            "$command" --version 2>&1 \
-                | grep -F 'lastz (version 1.04.52 released 20250402)' >/dev/null
+            run_information "$command-version" "$smoke_work/version" \
+                "$command" --version
+            grep -Fx 'lastz (version 1.04.60 released 20260928)' "$smoke_work/version" >/dev/null
+            run_cmd "$command-libraries" "$smoke_work/libraries" "$smoke_work/libraries.stderr" \
+                ldd "$(command -v "$command")"
+            if grep -F 'not found' "$smoke_work/libraries"; then
+                printf 'missing runtime library: %s\n' "$command" >&2
+                exit 1
+            fi
         done
-        lastz --help 2>&1 | grep -F 'target[[start..end]]' >/dev/null
-        lastz --help 2>&1 | grep -F -- '--format=<type>' >/dev/null
+        run_information lastz-help "$smoke_work/help" lastz --help
+        grep -F 'target[[start..end]]' "$smoke_work/help" >/dev/null
+        grep -F -- '--format=<type>' "$smoke_work/help" >/dev/null
         ;;
     pycompile)
         new_workdir pycompile
@@ -202,8 +227,19 @@ case "${1:-}" in
             fasta_fragments.py --fragment=20 --step=10 --head=2
         grep -F '>' "$smoke_work/fragments.fa" >/dev/null
         ;;
+    masking)
+        new_workdir masking
+        run_cmd segments "$smoke_work/self.seg" "$smoke_work/segments.stderr" \
+            lastz "$testdata/pseudocat.fa" "$testdata/pseudocat.fa" --format=segments
+        test -s "$smoke_work/self.seg"
+        run_cmd masked-segments "$smoke_work/masked.maf" "$smoke_work/masked.stderr" \
+            lastz "$testdata/pseudocat.fa" "$testdata/pseudocat.fa" \
+                --segments="$smoke_work/self.seg" --masking=1 --format=maf
+        grep -F '##maf version=1' "$smoke_work/masked.maf" >/dev/null
+        grep -E '^s[[:space:]]' "$smoke_work/masked.maf" >/dev/null
+        ;;
     *)
-        printf 'usage: taf-lastz-smoke {source|versions|pycompile|align|helpers}\n' >&2
+        printf 'usage: taf-lastz-smoke {source|versions|pycompile|align|helpers|masking}\n' >&2
         exit 64
         ;;
 esac

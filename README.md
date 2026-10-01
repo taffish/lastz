@@ -1,19 +1,20 @@
 # lastz
 
-`lastz` packages the complete LASTZ 1.04.52 command-line release for TAFFISH.
+`lastz` packages the complete LASTZ 1.04.60 command-line release for TAFFISH.
 
 ## Package Identity
 
 - command: `taf-lastz`
 - kind: `tool`
-- version: `1.04.52-r2`
-- image: `ghcr.io/taffish/lastz:1.04.52-r2`
+- version: `1.04.60-r1`
+- image: `ghcr.io/taffish/lastz:1.04.60-r1`
 - native platforms: `linux/amd64`, `linux/arm64`
 - TAFFISH app license: Apache-2.0
-- upstream release: <https://github.com/lastz/lastz/releases/tag/1.04.52>
+- upstream release: <https://github.com/lastz/lastz/releases/tag/1.04.60>
 
-This is a same-upstream successor. It does not change LASTZ's scientific
-version, defaults, output formats, or public command surface.
+This upstream update fixes the `--masking` / `--segments` crash and carries
+upstream compiler/build-system improvements. The packaging does not patch
+LASTZ's C alignment algorithms or alter its default parameters.
 
 ## Scope
 
@@ -34,10 +35,18 @@ It also retains all 22 executable upstream scripts from `tools/` and
 - FASTA fragmentation/masking, masking-interval, qdna, score, and quantum-code
   utilities
 
-LASTZ is a finite CLI application. It starts no GUI, browser service, daemon,
-listener, GPU/device session, or long-running helper. Upstream mentions
-KegAlign and SegAlign as separate GPU projects; they are not optional entry
-points of this app.
+LASTZ itself is a finite CLI application. Its official manual recommends
+[GMAJ](https://globin.bx.psu.edu/dist/gmaj/), a separate Java MAF viewer.
+The official GMAJ archive, JAR and documentation were inspected, but an
+explicit redistribution grant was not found; its binary contains an
+all-rights-reserved notice. GMAJ is therefore not bundled pending license
+clarification. LASTZ's MIT license is not assumed to cover that separate
+program. Export standard MAF and open it in a separately licensed/installed
+viewer. No GUI runtime is claimed or tested in this package.
+
+This package starts no browser service, daemon, listener or GPU/device
+session. KegAlign and SegAlign are separate GPU aligner implementations, not
+entry points in the packaged LASTZ source release.
 
 ## Installation
 
@@ -48,10 +57,10 @@ taf update
 taf install lastz
 ```
 
-After r2 is published, select its immutable identity explicitly with:
+After this candidate is published, select its immutable identity explicitly:
 
 ```sh
-taf install lastz 1.04.52-r2
+taf install lastz 1.04.60-r1
 ```
 
 ## Main Commands
@@ -78,6 +87,17 @@ uses `taf-lastz lastz ...` to avoid ambiguity. Use
 `taf-lastz upstream-command subcommand ...` for any upstream CLI that has its
 own subcommands; `--` is mainly for option-leading arguments to default
 `lastz`.
+
+TAFFISH 0.11 command mode reconstructs a shell command. For a path containing
+spaces, preserve literal quotes inside the argument, for example:
+
+```sh
+taf-lastz lastz "'reference with spaces.fa'" query.fa \
+  "'--output=result with spaces.maf'" --format=maf
+```
+
+This syntax was tested through the real wrapper. Merely passing a
+normally shell-quoted path loses its boundary in this command mode.
 
 ## Helper Examples
 
@@ -106,7 +126,7 @@ stdout or to an explicit user-selected path such as `--writecode=<file>`.
 
 Normal execution writes only to stdout, the writable current/output directory,
 explicit user-selected paths, and backend temporary space. It does not require
-writes under `/opt`, `/usr`, or image-internal `/var/lib`. The r2 smoke sends
+writes under `/opt`, `/usr`, or image-internal `/var/lib`. The smoke sends
 explicit Python bytecode checks to a unique disposable `/tmp` cache and leaves
 the packaged helper tree unchanged.
 
@@ -136,14 +156,47 @@ commands above.
 The packaged commands and helpers are offline-capable. Documentation URLs are
 references only; smoke and normal computation do not require network access.
 
-## r2 Compatibility Repair
+References may live in a personal directory such as
+`$HOME/.local/share/taffish/lastz/references/<assembly-version>`, or a site
+directory such as `/opt/taffish/lastz/references/<assembly-version>`.
+An administrator prepares the chosen, legally shareable reference once,
+records its source/version/checksums and keeps the directory traversable and
+files readable by intended users (typically directories 0755 and files 0644).
+Do not grant ordinary users write access to the published reference.
+Build any HSX index beside the reference during preparation; its embedded
+paths must remain valid at the mounted location. Publish a new directory for
+reference changes instead of overwriting a shared reference in place.
 
-r1's explicit smoke compilation attempted to create `__pycache__` under
+For example, bind the same prepared root to a stable read-only container
+path, and keep `query.fa` and output in the current directory:
+
+```sh
+TAFFISH_CONTAINER_BACKEND=docker \
+  TAFFISH_DOCKER_RUN_ARGS="-v /opt/taffish/lastz/references/demo-v1:/refs:ro" \
+  taf-lastz lastz /refs/reference.fa query.fa --format=maf > alignments.maf
+TAFFISH_CONTAINER_BACKEND=podman \
+  TAFFISH_PODMAN_RUN_ARGS="-v /opt/taffish/lastz/references/demo-v1:/refs:ro" \
+  taf-lastz lastz /refs/reference.fa query.fa --format=maf > alignments.maf
+TAFFISH_CONTAINER_BACKEND=apptainer \
+  TAFFISH_APPTAINER_RUN_ARGS="--bind /opt/taffish/lastz/references/demo-v1:/refs:ro" \
+  taf-lastz lastz /refs/reference.fa query.fa --format=maf > alignments.maf
+```
+
+Replace the host root with your personal/site reference path. There is no
+automatic resource discovery, silent download or resource environment
+override: use explicit input paths and backend binds. Omit the optional bind
+when using files in the current directory. Missing resources fail rather
+than downloading. These are sharing mechanics, not validation of a specific
+production assembly or its license.
+
+## Retained Python 3 Compatibility Repairs
+
+The historical 1.04.52-r1 smoke compilation attempted to create `__pycache__` under
 `/opt/lastz/share/lastz` and failed on a read-only Apptainer SIF. r1 also
 contained build-time bytecode in that tree. r2 validates all 23 Python sources
 through a disposable cache and ships no image-root `__pycache__`.
 
-The Debian 12 runtime uses Python 3.11. r2 strictly updates two legacy
+The Debian 12 runtime uses Python 3.11. The retained strict package patch updates two legacy
 `MutableMapping` imports, restores the documented plain/gzip FASTA and 2bit
 paths in `tabular_to_maf.py`, and converts six invalid Python 3 string
 exceptions in `expand_scores_file.py` to `ValueError` without changing valid
@@ -162,8 +215,10 @@ temporary cache.
   backend-specific read-only bind and keep embedded paths container-visible.
 - Use `lastz_32` or `lastz_40` only for the documented coordinate-range need;
   upstream describes `lastz_40` as experimental.
-- A non-zero helper or aligner exit is authoritative. Inspect its stderr and
-  user-selected output before changing biological parameters.
+- Upstream `lastz --version` and `lastz --help` intentionally exit 1, even
+  when they print valid information. For scripting, upstream also provides
+  `--version:noerror`. Other non-zero helper/aligner exits are failures;
+  inspect stderr and user-selected output before changing parameters.
 
 ## Testing and Release Boundary
 
@@ -176,8 +231,15 @@ wrapper layers, read-only/non-root execution, Apptainer SIF immutability,
 failure-log replay, image content/size, publish dry-run, and strict target
 cleanup.
 
+Build-time checks stay at version/help, dependency/source inventory, Python
+compilation and upstream tiny tests. Full helper and masking regression
+checks run after image construction. No rendering or GUI check is a build
+requirement. The Action is already byte-identical to fresh `taf new` and is
+left unchanged.
+
 These are packaging and tiny functional checks, not scientific validation for
-production genome-alignment parameters.
+production genome-alignment parameters. See release.md for actual evidence
+and any untested platform/backend combinations.
 
 ## License and Citation
 

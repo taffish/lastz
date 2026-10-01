@@ -1,5 +1,5 @@
-ARG LASTZ_VERSION=1.04.52
-ARG LASTZ_SHA256=274bf0d774e3f4da87c23ca0b5cc4269f3dcaecf71a1c6289d426e24fbccf4c8
+ARG LASTZ_VERSION=1.04.60
+ARG LASTZ_SHA256=e66bb419a6599861b1d48c3b209d3746e8008c3ddde33f0dfeaa76e634bccebf
 
 FROM debian:12-slim@sha256:88200866dfff7ea7f5cbcb6ec7c8a701889efe6fe859fe64d6990e4b07ea4171 AS builder
 
@@ -104,9 +104,7 @@ RUN set -eux; \
     bash -n /opt/lastz/share/lastz/tools/create_scores_file.sh; \
     taf-lastz-smoke source; \
     taf-lastz-smoke versions; \
-    taf-lastz-smoke pycompile; \
-    taf-lastz-smoke align; \
-    taf-lastz-smoke helpers
+    taf-lastz-smoke pycompile
 
 WORKDIR /work
 

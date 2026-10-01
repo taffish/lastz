@@ -1,0 +1,6 @@
+{
+  "artifact": "taf-lastz-v1.04.60-r1",
+  "schema": "taffish.build/v1",
+  "source_sha256": "9a113847ba2786bfaeacff7d25faf70ece769f78e76bfe072ff6eb72f1e3216e",
+  "wrapper_sha256": "8ce3e1083d0be2a383b54960fef7461e7c7d36d59df3a3b1f25af1a8bfc75aea"
+}
